@@ -1,0 +1,102 @@
+No,Company,Symbol
+1,Apple Inc.,AAPL
+2,AbbVie,ABBV
+3,Abbott Laboratories,ABT
+4,Accenture,ACN
+5,Adobe Inc.,ADBE
+6,American International Group,AIG
+7,Advanced Micro Devices,AMD
+8,Amgen,AMGN
+9,American Tower,AMT
+10,Amazon,AMZN
+11,Broadcom,AVGO
+12,American Express,AXP
+13,Boeing,BA
+14,Bank of America,BAC
+15,BNY Mellon,BK
+16,Booking Holdings,BKNG
+17,BlackRock,BLK
+18,Bristol Myers Squibb,BMY
+19,Berkshire Hathaway (Class B),BRK.B
+20,Citigroup,C
+21,Caterpillar Inc.,CAT
+22,Charter Communications,CHTR
+23,Colgate-Palmolive,CL
+24,Comcast,CMCSA
+25,Capital One,COF
+26,ConocoPhillips,COP
+27,Costco,COST
+28,Salesforce,CRM
+29,Cisco,CSCO
+30,CVS Health,CVS
+31,Chevron Corporation,CVX
+32,Deere & Company,DE
+33,Danaher Corporation,DHR
+34,Walt Disney Company (The),DIS
+35,Duke Energy,DUK
+36,Emerson Electric,EMR
+37,FedEx,FDX
+38,General Dynamics,GD
+39,GE Aerospace,GE
+40,Gilead Sciences,GILD
+41,General Motors,GM
+42,Alphabet Inc. (Class C),GOOG
+43,Alphabet Inc. (Class A),GOOGL
+44,Goldman Sachs,GS
+45,Home Depot,HD
+46,Honeywell,HON
+47,IBM,IBM
+48,Intel,INTC
+49,Intuit,INTU
+50,Intuitive Surgical,ISRG
+51,Johnson & Johnson,JNJ
+52,JPMorgan Chase,JPM
+53,Coca-Cola Company (The),KO
+54,Linde plc,LIN
+55,Eli Lilly and Company,LLY
+56,Lockheed Martin,LMT
+57,Lowe's,LOW
+58,Mastercard,MA
+59,McDonald's,MCD
+60,Mondel?z International,MDLZ
+61,Medtronic,MDT
+62,MetLife,MET
+63,Meta Platforms,META
+64,3M,MMM
+65,Altria,MO
+66,Merck & Co.,MRK
+67,Morgan Stanley,MS
+68,Microsoft,MSFT
+69,NextEra Energy,NEE
+70,"Netflix, Inc.",NFLX
+71,"Nike, Inc.",NKE
+72,ServiceNow,NOW
+73,Nvidia,NVDA
+74,Oracle Corporation,ORCL
+75,PepsiCo,PEP
+76,Pfizer,PFE
+77,Procter & Gamble,PG
+78,Palantir Technologies,PLTR
+79,Philip Morris International,PM
+80,PayPal,PYPL
+81,Qualcomm,QCOM
+82,RTX Corporation,RTX
+83,Starbucks,SBUX
+84,Charles Schwab Corporation,SCHW
+85,Southern Company,SO
+86,Simon Property Group,SPG
+87,AT&T,T
+88,Target Corporation,TGT
+89,Thermo Fisher Scientific,TMO
+90,T-Mobile US,TMUS
+91,"Tesla, Inc.",TSLA
+92,Texas Instruments,TXN
+93,UnitedHealth Group,UNH
+94,Union Pacific Corporation,UNP
+95,United Parcel Service,UPS
+96,U.S. Bancorp,USB
+97,Visa Inc.,V
+98,Verizon,VZ
+99,Wells Fargo,WFC
+100,Walmart,WMT
+101,ExxonMobil,XOM

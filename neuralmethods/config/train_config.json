@@ -1,0 +1,38 @@
+{
+  "MODEL": "TCN",
+  "BATCH": 32,
+  "SEED": 42,
+  "EPOCHS": 100,
+  "EARLY_STOP": 20,
+  "LR": 0.005,
+  "MOMENTUM": 0.9,
+  "USE_CUDA": false,
+  "N_LAYER": 1,
+  "HIDDEN_DIM": 128,
+  "N_FEAT": 101,
+  "DROPOUT": 0.3,
+  "BIDIRECTIONAL": false,
+  "LB": 0.01,
+  "UB": 0.9,
+  "K": 10,
+  "L_LB": 5.0,
+  "L_UB": 5.0,
+  "L_K": 2.0,
+  "RF": 0.0524,
+  "OPTIMISER": "SAM",
+  "TCN": {
+    "n_feature": 101,
+    "n_output": 101,
+    "kernel_size": 5,
+    "n_dropout": 0.1,
+    "n_timestep": 60
+  },
+  "TRANSFORMER": {
+    "n_feature": 101,
+    "n_timestep": 60,
+    "n_layer": 6,
+    "n_head": 4,
+    "n_dropout": 0.1,
+    "n_output": 101
+  }
+}
