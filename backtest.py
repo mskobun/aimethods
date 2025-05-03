@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-from backtest_adapters import GABacktest
-from hybrid import PSOBacktest
-from neuralmethods.tcn_backtest import TCNBacktest
+from backtest_adapters import GABacktest, PSOBacktest
+from tcn.tcn_backtest import TCNBacktest
 from lstm_pyopt import LSTMPyOptBacktest
 import time
 from datetime import datetime
@@ -214,28 +213,28 @@ def main():
     bench_dataset = ReturnDataset(bench_data, seq_len)
 
     algorithms = {
-        "GA": GABacktest(),
+        #        "GA": GABacktest(),
+        # "PSO": PSOBacktest(),
         "TCN": TCNBacktest(train_data, val_data, seq_len, future_days),
-        "PSO": PSOBacktest(),
-        "LSTM_PyOpt": LSTMPyOptBacktest(
-            train_data,
-            val_data,
-            seq_len,
-            future_days,
-            params={
-                "lr": 0.001,
-                "hidden_dim": 64,
-                "num_layers": 1,
-                "dropout": 0.2,
-                "weight_decay": 1e-5,
-                "max_weight": 0.9,
-                "min_weight": 0.01,
-                "k_assets": 10,
-                "risk_free_rate": RISK_FREE_RATE,
-            },
-            training_plot_filename="lstm_pyopt_training.png",
-        ),
-        "EWP": EWPBacktest(),
+        # "LSTM_PyOpt": LSTMPyOptBacktest(
+        #     train_data,
+        #     val_data,
+        #     seq_len,
+        #     future_days,
+        #     params={
+        #         "lr": 0.001,
+        #         "hidden_dim": 64,
+        #         "num_layers": 1,
+        #         "dropout": 0.2,
+        #         "weight_decay": 1e-5,
+        #         "max_weight": 0.9,
+        #         "min_weight": 0.01,
+        #         "k_assets": 10,
+        #         "risk_free_rate": RISK_FREE_RATE,
+        #     },
+        #     training_plot_filename="lstm_pyopt_training.png",
+        # ),
+        # "EWP": EWPBacktest(),
     }
 
     print("Starting a backtest with the following algorithms:")

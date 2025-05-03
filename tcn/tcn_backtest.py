@@ -33,9 +33,7 @@ class TCNBacktest:
             test_df[: int(len(test_df))], train_len + pred_len, n_stock
         )
 
-        self.worker = Trainer(
-            json.load(open("neuralmethods/config/tcn_backtest.json", "r"))
-        )
+        self.worker = Trainer(json.load(open("tcn/config/tcn_backtest.json", "r")))
         x_tr = np.array([x[:train_len] for x in train_data])
         y_tr = np.array([x[-pred_len:] for x in train_data])
         x_te = np.array([x[:train_len] for x in test_data])

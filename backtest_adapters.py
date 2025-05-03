@@ -1,6 +1,7 @@
 import numpy as np
-from genetic import GA
 import pandas as pd
+from genetic import GA
+from pso import PSO
 
 
 class GABacktest:
@@ -65,3 +66,18 @@ class GABacktest:
                 global_best_solution = best_solution
                 global_best_score = best_score
         return global_best_solution
+
+
+class PSOBacktest:
+    def __init__(self, risk_free_rate: float = 0.0524 / 365, num_iterations: int = 500):
+        self.risk_free_rate = risk_free_rate
+        self.num_iterations = num_iterations
+
+    def train(self):
+        pass
+
+    def get_weights(self, returns: np.ndarray):
+        returns_df = pd.DataFrame(returns)
+        pso = PSO(returns_df, risk_free_rate=self.risk_free_rate, quiet=True)
+        weights, _, _ = pso.run(self.num_iterations)
+        return weights

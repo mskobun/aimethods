@@ -19,50 +19,27 @@ The regular PSO resumes until stopping criteria are met or maximum iterations ar
 """
 
 
-class PSOBacktest:
-    def __init__(self, risk_free_rate: float = 0.0524 / 365, num_iterations: int = 500):
-        self.risk_free_rate = risk_free_rate
-        self.num_iterations = num_iterations
+def main():
+    returns = pd.read_csv("data/return_df.csv", index_col=0)  # column 0 is date
+    risk_free_rate = 0.0524 / 365
 
-    def train(self):
-        pass
+    pso = PSO(returns, risk_free_rate=risk_free_rate)
+    solution, score, runtime_data = pso.run(500)
 
-    def get_weights(self, returns: np.ndarray):
-        returns_df = pd.DataFrame(returns)
-        pso = PSO(returns_df, risk_free_rate=self.risk_free_rate)
-        weights, _, _ = pso.run(self.num_iterations)
-        return weights
+    portfolio = dict(zip(returns.columns, solution))
+    holdings = {k: v for k, v in portfolio.items() if v > 0}
+    sorted_holdings = dict(sorted(holdings.items(), key=lambda x: x[1], reverse=True))
 
+    pso.plot_convergence()
+    pso.plot_runtime_analysis(runtime_data)
+    pso.plot_score_statistics()
+    pso.plot_portfolio_composition()
 
-class PSORunner:
-    def __init__(self) -> None:
-        self.returns = pd.read_csv(
-            "data/return_df.csv", index_col=0
-        )  # column 0 is date
-        self.risk_free_rate = 0.0524 / 365
-
-    def main(self):
-        pso = PSO(self.returns, risk_free_rate=self.risk_free_rate)
-        solution, score, runtime_data = pso.run(500)
-
-        portfolio = dict(zip(self.returns.columns, solution))
-        holdings = {k: v for k, v in portfolio.items() if v > 0}
-        sorted_holdings = dict(
-            sorted(holdings.items(), key=lambda x: x[1], reverse=True)
-        )
-
-        pso.plot_convergence()
-        pso.plot_runtime_analysis(runtime_data)
-        pso.plot_score_statistics()
-        pso.plot_portfolio_composition()
-
-        print("\nOptimal Portfolio Composition:")
-        print("------------------------------")
-        for stock, weight in sorted_holdings.items():
-            print(f"{stock}: {weight:.4f} ({weight * 100:.2f}%)")
-        print(f"Portfolio Sharpe: {score:.4f}")
-
-    # maximise sharpe ratio
+    print("\nOptimal Portfolio Composition:")
+    print("------------------------------")
+    for stock, weight in sorted_holdings.items():
+        print(f"{stock}: {weight:.4f} ({weight * 100:.2f}%)")
+    print(f"Portfolio Sharpe: {score:.4f}")
 
 
 class Particle:
@@ -95,6 +72,7 @@ class PSO:
         weight_max: float = 0.9,
         weight_min: float = 0.01,
         risk_free_rate: float = 0.0524 / 365,
+        quiet: bool = False,
     ):
         self.validate_constraints(portfolio_size, weight_min, weight_max)
         self.returns = returns
@@ -108,6 +86,7 @@ class PSO:
         self.mean_return = returns.mean()
         self.covariance_matrix = returns.cov()
         self.risk_free_rate = risk_free_rate
+        self.quiet = quiet
         # For visualization
         self.convergence_history = []
         self.avg_personal_best_history = []
@@ -307,13 +286,13 @@ class PSO:
             p.position = old_p.position.copy()
             p.velocity = old_p.velocity.copy()
 
-        temp_pso = PSO(self.returns)
+        temp_pso = PSO(self.returns, quiet=self.quiet)
         temp_pso.particles = current_particles
         return temp_pso.run(iterations)
 
     def _reset_and_continue(self, iterations):
         """Reset 1/3 of the swarm with new random positions and velocities"""
-        temp_pso = PSO(self.returns, self.particles_count // 3)
+        temp_pso = PSO(self.returns, self.particles_count // 3, quiet=self.quiet)
         return temp_pso.run(iterations)
 
     def run(self, iterations: int, seed: int = 42):
@@ -389,7 +368,8 @@ class PSO:
 
             # Check for stagnation
             if self.check_stagnation(global_best_history):
-                print("Stagnation detected - splitting swarms")
+                if not self.quiet:
+                    print("Stagnation detected - splitting swarms")
 
                 # Store current best solution
                 current_best = self.global_best.copy()
@@ -411,6 +391,7 @@ class PSO:
                     weight_min=self.weight_min,
                     weight_max=self.weight_max,
                     evaluate=lambda weights: self.evaluate(weights),
+                    quiet=self.quiet,
                 )
                 swarm3_solution, swarm3_score, _ = tabu.run(seed)
 
@@ -429,19 +410,12 @@ class PSO:
                 # Reset history
                 global_best_history = []
 
-                print(
-                    f"Swarms returned Best Sharpe ratio = {round(self.global_best_sharpe, 4)}"
-                )
-                print("Resume normal PSO")
-                print("---")
-
-            # print(
-            #     f"Iteration {i + 1}: Global Best Sharpe ratio = {round(self.global_best_sharpe, 4)}"
-            # )
-            # print(
-            #     f"Average personal best Sharpe ratio: {round(np.mean([p.personal_best_sharpe for p in self.particles]), 4)}"
-            # )
-            # print("---")
+                if not self.quiet:
+                    print(
+                        f"Swarms returned Best Sharpe ratio = {round(self.global_best_sharpe, 4)}"
+                    )
+                    print("Resume normal PSO")
+                    print("---")
 
             patience_global = (
                 patience_global + 1
@@ -456,10 +430,11 @@ class PSO:
             i += 1
 
         runtime = time.time() - start_time
-        print(f"Runtime: {round(runtime, 4)}")
-        print(f"Optimal Sharpe ratio: {round(self.global_best_sharpe, 4)}")
-        print(f"Optimal weights: {self.global_best}")
-        print(f"{np.sum(self.global_best)}")
+        if not self.quiet:
+            print(f"Runtime: {round(runtime, 4)}")
+            print(f"Optimal Sharpe ratio: {round(self.global_best_sharpe, 4)}")
+            print(f"Optimal weights: {self.global_best}")
+            print(f"{np.sum(self.global_best)}")
 
         # Compile runtime data for return
         runtime_data = {
@@ -726,6 +701,7 @@ class Tabu:
         weight_min: float = 0.01,
         weight_max: float = 0.9,
         evaluate: Callable[[np.ndarray], float] = None,
+        quiet: bool = False,
     ):
         if initial_solution is None:
             raise ValueError(
@@ -742,6 +718,7 @@ class Tabu:
         self.weight_min = weight_min
         self.weight_max = weight_max
         self.evaluate = evaluate
+        self.quiet = quiet
 
         # Tabu list: each row is a stock with two columns:
         # Column 0: Tabu time for increase move. Initialized to 0 (non-tabu)
@@ -846,13 +823,14 @@ class Tabu:
                 break
 
         runtime = time.time() - start_time
-        print(f"Tabu Runtime: {round(runtime, 4)}")
-        print(f"Tabu Optimal Sharpe ratio: {round(self.optimal_sharpe, 4)}")
-        print(f"Tabu Optimal weights: {self.optimal_solution}")
-        print(f"{np.sum(self.optimal_solution)}")
+        if not self.quiet:
+            print(f"Tabu Runtime: {round(runtime, 4)}")
+            print(f"Tabu Optimal Sharpe ratio: {round(self.optimal_sharpe, 4)}")
+            print(f"Tabu Optimal weights: {self.optimal_solution}")
+            print(f"{np.sum(self.optimal_solution)}")
 
         return self.optimal_solution, self.optimal_sharpe, runtime
 
 
 if __name__ == "__main__":
-    PSORunner().main()
+    main()
