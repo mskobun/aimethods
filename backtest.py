@@ -145,7 +145,6 @@ class BacktestResults:
         # Rotate x-axis labels for better readability
         plt.xticks(rotation=45)
         plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-        plt.tight_layout()
 
         if save_path:
             plt.savefig(save_path, bbox_inches="tight")
@@ -165,6 +164,7 @@ class BacktestResults:
         )
 
 
+# Dummy backtest adapter for an equal weight portfolio
 class EWPBacktest:
     def __init__(self):
         pass
@@ -179,62 +179,64 @@ class EWPBacktest:
 RISK_FREE_RATE = 0.0524
 
 
-def main():
+def run_backtest(selected_algorithms=None):
     print(f"\nStarting backtest at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     start_time = time.time()
 
     data = pd.read_csv("data/return_df.csv", index_col="Date")
     data.index = pd.to_datetime(data.index)  # Convert index to datetime
 
-    # Filter data to 2010-2020 period
-    data = data["2010":"2020"]
-    print(
-        f"Filtered data to period: {data.index[0].strftime('%Y-%m-%d')} to {data.index[-1].strftime('%Y-%m-%d')}"
-    )
-
-    # Data for training (LSTM only)
+    # Data for training (LSTM/TCN)
     train_len = int(0.6 * len(data))
     train_data = data[:train_len]
 
-    # Data for validation (LSTM only)
+    # Data for validation (LSTM/TCN)
     val_len = int(0.2 * len(data))
     val_data = data[train_len : train_len + val_len]
 
-    # Data for training (TCN only)
-    val_and_train_data = pd.concat([val_data, train_data])
-
     # Data for benchmarking (All algorithms)
-    bench_len = int(0.2 * len(data))
     bench_data = data[train_len + val_len :]
 
     seq_len = 60
     future_days = 20
     bench_dataset = ReturnDataset(bench_data, seq_len)
 
-    algorithms = {
-        #        "GA": GABacktest(),
-        # "PSO": PSOBacktest(),
-        "TCN": TCNBacktest(train_data, val_data, seq_len, future_days),
-        # "LSTM_PyOpt": LSTMPyOptBacktest(
-        #     train_data,
-        #     val_data,
-        #     seq_len,
-        #     future_days,
-        #     params={
-        #         "lr": 0.001,
-        #         "hidden_dim": 64,
-        #         "num_layers": 1,
-        #         "dropout": 0.2,
-        #         "weight_decay": 1e-5,
-        #         "max_weight": 0.9,
-        #         "min_weight": 0.01,
-        #         "k_assets": 10,
-        #         "risk_free_rate": RISK_FREE_RATE,
-        #     },
-        #     training_plot_filename="lstm_pyopt_training.png",
-        # ),
-        # "EWP": EWPBacktest(),
-    }
+    # Initialize only the selected algorithms
+    algorithms = {}
+
+    # Always ensure EWP is included as benchmark
+    if selected_algorithms is None:
+        selected_algorithms = ["GA", "PSO", "TCN", "LSTM_PyOpt", "EWP"]
+    elif "EWP" not in selected_algorithms:
+        selected_algorithms.append("EWP")
+
+    if "GA" in selected_algorithms:
+        algorithms["GA"] = GABacktest()
+    if "PSO" in selected_algorithms:
+        algorithms["PSO"] = PSOBacktest()
+    if "TCN" in selected_algorithms:
+        algorithms["TCN"] = TCNBacktest(train_data, val_data, seq_len, future_days)
+    if "LSTM_PyOpt" in selected_algorithms:
+        algorithms["LSTM_PyOpt"] = LSTMPyOptBacktest(
+            train_data,
+            val_data,
+            seq_len,
+            future_days,
+            params={
+                "lr": 0.001,
+                "hidden_dim": 64,
+                "num_layers": 1,
+                "dropout": 0.2,
+                "weight_decay": 1e-5,
+                "max_weight": 0.9,
+                "min_weight": 0.01,
+                "k_assets": 10,
+                "risk_free_rate": RISK_FREE_RATE,
+            },
+            training_plot_filename="lstm_pyopt_training.png",
+        )
+    if "EWP" in selected_algorithms:
+        algorithms["EWP"] = EWPBacktest()
 
     print("Starting a backtest with the following algorithms:")
     for algorithm in algorithms:
@@ -282,13 +284,14 @@ def main():
 
         current_date = bench_data.index[batch_idx + seq_len]
         for name, algorithm in algorithms.items():
+            batch_start_time = time.time()
             weights = algorithm.get_weights(X)
             portfolio_return = (weights * Y).sum()
             results[name].add_result(current_date, weights, portfolio_return)
+            results[name].backtest_time += time.time() - batch_start_time
 
     # Calculate final statistics
     for result in results.values():
-        result.backtest_time = time.time() - start_time - result.training_time
         result.calculate_stats(
             # Use Equal Weight Portfolio as benchmark
             benchmark_returns=results["EWP"].daily_returns,
@@ -334,150 +337,52 @@ def plot_results(save_path=None):
         )
 
 
-def plot_predicted_vs_actual_returns(
-    model_name="LSTM_PyOpt", ticker="AAPL", save_path=None
-):
-    """
-    Plot predicted vs actual returns for a specific ticker.
+def main():
+    print("Welcome to the Portfolio Backtest System")
+    print("-" * 40)
 
-    Args:
-        model_name: Name of the model to use (default "LSTM_PyOpt")
-        ticker: Ticker symbol to plot (default "AAPL")
-        save_path: Path to save the plot (default None)
-    """
-    # Load data
-    data = pd.read_csv("data/return_df.csv", index_col="Date")
-    data.index = pd.to_datetime(data.index)
+    # Ask user if they want to see previous results or run a new backtest
+    choice = input(
+        "Do you want to (1) view previous results or (2) run a new backtest? (1/2): "
+    )
 
-    # # Filter data to 2010-2020 period
-    # data = data["2010":"2020"]
+    if choice == "1":
+        print("\nLoading previous backtest results...")
+        plot_results()
+    elif choice == "2":
+        # List available algorithms
+        available_algorithms = ["GA", "PSO", "TCN", "LSTM_PyOpt", "EWP"]
+        print("\nAvailable algorithms:")
+        for i, algo in enumerate(available_algorithms):
+            print(f"{i + 1}. {algo}")
 
-    # Check if ticker exists in the data
-    if ticker not in data.columns:
+        # Get algorithm selection from user
+        print("\nSelect algorithms to run (e.g., '1,3,4' for GA, TCN, and LSTM_PyOpt):")
         print(
-            f"Ticker {ticker} not found in data. Available tickers: {data.columns.tolist()}"
+            "Note: EWP (Equal Weight Portfolio) will always be included as a benchmark"
         )
-        return
 
-    # Find ticker index
-    ticker_idx = data.columns.get_loc(ticker)
+        selection = input("Enter comma-separated numbers or 'all' for all algorithms: ")
 
-    # Data split
-    train_len = int(0.6 * len(data))
-    val_len = int(0.2 * len(data))
-    train_data = data[:train_len]
-    val_data = data[train_len : train_len + val_len]
-    test_data = data[train_len + val_len :]
+        if selection.lower() == "all":
+            selected_algorithms = available_algorithms
+        else:
+            try:
+                # Convert input to list of selected algorithm names
+                indices = [int(idx.strip()) - 1 for idx in selection.split(",")]
+                selected_algorithms = [available_algorithms[i] for i in indices]
+            except (ValueError, IndexError):
+                print("Invalid selection. Running with all algorithms.")
+                selected_algorithms = available_algorithms
 
-    # Load the algorithms dictionary from main
-    seq_len = 60
-    future_days = 10
+        print(f"\nRunning backtest with: {', '.join(selected_algorithms)}")
+        run_backtest(selected_algorithms)
 
-    # Create model with the same configuration as in main()
-    if model_name == "LSTM_PyOpt":
-        from lstm_pyopt import LSTMPyOptBacktest
-
-        model = LSTMPyOptBacktest(
-            train_data,
-            val_data,
-            seq_len,
-            future_days,
-            params={
-                "lr": 0.005,
-                "hidden_dim": 128,
-                "num_layers": 3,
-                "dropout": 0.2,
-                "weight_decay": 1e-5,
-                "max_weight": 0.9,
-                "min_weight": 0.01,
-                "k_assets": 10,
-                "risk_free_rate": 0.0524,
-            },
-            training_plot_filename=None,
-        )
+        # Show results after backtest
+        plot_results()
     else:
-        print(f"Model {model_name} not supported for prediction plotting")
-        return
-
-    # Train the model
-    print(f"Training {model_name} model...")
-    model.train()
-
-    # Generate predictions
-    actual_returns = []
-    predicted_returns = []
-    dates = []
-
-    print(f"Generating predictions for {ticker}...")
-    for i in range(len(test_data) - seq_len):
-        # Get window of returns
-        window = test_data.iloc[i : i + seq_len].values
-
-        # Get actual return for the ticker on the next day
-        actual_return = test_data.iloc[i + seq_len, ticker_idx]
-
-        # Predict returns using the model
-        prediction = model.predict_price(window)
-
-        # Store the prediction for the specific ticker
-        predicted_return = prediction[ticker_idx]
-
-        # Store data for plotting
-        actual_returns.append(actual_return)
-        predicted_returns.append(predicted_return)
-        dates.append(test_data.index[i + seq_len])
-
-    # Create DataFrame for plotting
-    results_df = pd.DataFrame(
-        {"Date": dates, "Actual": actual_returns, "Predicted": predicted_returns}
-    )
-
-    # Plot the results
-    plt.figure(figsize=(12, 6))
-    plt.plot(
-        results_df["Date"], results_df["Actual"], label="Actual Returns", color="blue"
-    )
-    plt.plot(
-        results_df["Date"],
-        results_df["Predicted"],
-        label="Predicted Returns",
-        color="red",
-    )
-    plt.title(f"{ticker} - Actual vs Predicted Returns")
-    plt.xlabel("Date")
-    plt.ylabel("Returns")
-    plt.legend()
-    plt.grid(True)
-
-    # Format x-axis dates
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Calculate metrics
-    mse = np.mean((np.array(actual_returns) - np.array(predicted_returns)) ** 2)
-    mae = np.mean(np.abs(np.array(actual_returns) - np.array(predicted_returns)))
-    correlation = np.corrcoef(actual_returns, predicted_returns)[0, 1]
-
-    # Add metrics to the plot
-    plt.figtext(
-        0.15, 0.85, f"MSE: {mse:.6f}\nMAE: {mae:.6f}\nCorrelation: {correlation:.4f}"
-    )
-
-    # Save or show the plot
-    if save_path:
-        plt.savefig(save_path)
-        print(f"Plot saved to {save_path}")
-    else:
-        plt.show()
-
-    return results_df
+        print("Invalid choice. Exiting.")
 
 
 if __name__ == "__main__":
-    # Choose one:
-    # 1. Run the main backtest
     main()
-    plot_results()
-
-    # 2. Plot predicted vs actual returns for AAPL
-    # plot_predicted_vs_actual_returns(save_path="results/aapl_predicted_vs_actual.png")

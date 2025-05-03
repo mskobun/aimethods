@@ -382,3 +382,10 @@ class LSTMPyOptBacktest:
             # Fallback to equal weights if optimization fails
             n_assets = returns.shape[1]
             return np.ones(n_assets) / n_assets
+
+
+if __name__ == "__main__":
+    import backtest
+
+    print("Running LSTM_PyOpt backtest")
+    backtest.run_backtest(selected_algorithms=["LSTM_PyOpt"])
