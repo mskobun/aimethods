@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from genetic import GABacktest
+from backtest_adapters import GABacktest
 from hybrid import PSOBacktest
 from neuralmethods.tcn_backtest import TCNBacktest
 from lstm_pyopt import LSTMPyOptBacktest

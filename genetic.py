@@ -3,286 +3,128 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-import json
 
 
-class GABacktest:
-    def __init__(
-        self,
-        eps=0.01,
-        delta=0.99,
-        cardinality=10,
-        pop_size=100,
-        num_gens=200,
-        trial_count=5,
-    ):
-        self.pop_size = pop_size
-        self.num_gens = num_gens
-        self.trial_count = trial_count
-        self.eps = eps
-        self.delta = delta
-        self.cardinality = cardinality
-        self.eps_floor = np.array([eps] * 101)
-        self.delta_ceil = np.array([delta] * 101)
-
-    def train(self):
-        pass
-
-    def get_weights(self, returns_arr: np.ndarray):
-        returns_df = pd.DataFrame(returns_arr)
-
-        self.genetic_algorithm = GA(
-            returns_df,
-            eps=self.eps_floor,
-            delta=self.delta_ceil,
-            cardinality=self.cardinality,
-        )
-        selection_strs = ["Tournament"]
-        crsvr_strs = ["uniform_crossover"]
-
-        runtime_traces = {
-            crsvr: {
-                select: {trial: np.array([]) for trial in range(self.trial_count)}
-                for select in selection_strs
-            }
-            for crsvr in crsvr_strs
-        }
-        fitness_traces = {
-            crsvr: {
-                select: {trial: np.array([]) for trial in range(self.trial_count)}
-                for select in selection_strs
-            }
-            for crsvr in crsvr_strs
-        }
-        final_scores = {
-            crsvr: {
-                select: {trial: np.array([]) for trial in range(self.trial_count)}
-                for select in selection_strs
-            }
-            for crsvr in crsvr_strs
-        }
-        score_plot_region = {
-            crsvr_strs[i - 1]: 200 + len(crsvr_strs) * 10 + i
-            for i in range(1, len(crsvr_strs) + 1)
-        }
-        runtime_plot_region = {
-            crsvr_strs[i - 1]: 200 + len(crsvr_strs) * 10 + i + len(crsvr_strs)
-            for i in range(1, len(crsvr_strs) + 1)
-        }
-
-        global_best_score = 0
-        best_wts = []
-        for crsvr in crsvr_strs:
-            for selection in selection_strs:
-                for i in range(0, self.trial_count):
-                    scores, wts, times, runtime = self.genetic_algorithm.solveGA(
-                        pop_size=self.pop_size,
-                        tournament_size=5,
-                        crossover_str=crsvr,
-                        selection_str=selection,
-                        crossover_rate=0.85,
-                        mutation_rate=0.0,
-                        num_generations=self.num_gens,
-                        elite_pct=0.1,
-                        patience_pct=0.2,
-                        seed=i + 1,
-                    )
-                    best_wts.append(wts)
-                    # scores : record of scores over the generations
-                    # wts : the record of wts
-                    best_solution = self.genetic_algorithm.optimal_wts
-                    best_score = self.genetic_algorithm.sharpe(best_solution)
-                    if best_score > global_best_score:
-                        global_best_solution = best_solution
-                        global_best_score = best_score
-                        global_best_trial = i + 1
-                        global_best_time = runtime
-
-                    trial_opt_weights = self.genetic_algorithm.optimal_wts
-                    final_scores[crsvr][selection][i] = self.genetic_algorithm.sharpe(
-                        trial_opt_weights
-                    )
-                    runtime_traces[crsvr][selection][i] = np.array(times)
-                    fitness_traces[crsvr][selection][i] = scores
-
-                solution = self.genetic_algorithm.optimal_wts
-                return solution
-
-
-# %%
 def main():
+    # Sample runner code.
     eps_floor = np.array([0.01] * 101)
-    delta_ceil = np.array([0.99] * 101)
+    delta_ceil = np.array([0.9] * 101)
     data_wd = "data/return_df.csv"
-    returns_df = pd.read_csv(data_wd, index_col="Date")
+    df = pd.read_csv(data_wd)
     card = 10
-    Genetic_Algorithm = GA(
-        returns_df, eps=eps_floor, delta=delta_ceil, cardinality=card
-    )
-    fig = plt.figure(figsize=(36, 12))
+    Genetic_Algorithm = GA(df, eps=eps_floor, delta=delta_ceil, cardinality=card)
 
-    pop_size = 100
-    num_gens = 200
+    # Sample parameters
+    pop_size = 500
+    num_gens = 500
     trial_count = 5
 
-    linestyles = {"Roulette": "-", "Tournament": "--"}
+    crsvr = "uniform_crossover"
+    selection = "Tournament"
 
-    selection_strs = ["Tournament"]
-    crsvr_strs = ["uniform_crossover"]
+    runtime_arr = []
+    best_scores_arr = []
 
-    runtime_traces = {
-        crsvr: {
-            select: {trial: np.array([]) for trial in range(trial_count)}
-            for select in selection_strs
-        }
-        for crsvr in crsvr_strs
-    }
-    fitness_traces = {
-        crsvr: {
-            select: {trial: np.array([]) for trial in range(trial_count)}
-            for select in selection_strs
-        }
-        for crsvr in crsvr_strs
-    }
-    final_scores = {
-        crsvr: {
-            select: {trial: np.array([]) for trial in range(trial_count)}
-            for select in selection_strs
-        }
-        for crsvr in crsvr_strs
-    }
-    score_plot_region = {
-        crsvr_strs[i - 1]: 200 + len(crsvr_strs) * 10 + i
-        for i in range(1, len(crsvr_strs) + 1)
-    }
-    runtime_plot_region = {
-        crsvr_strs[i - 1]: 200 + len(crsvr_strs) * 10 + i + len(crsvr_strs)
-        for i in range(1, len(crsvr_strs) + 1)
-    }
-
-    fig = plt.figure(figsize=(32, 12))
     global_best_score = 0
     best_wts = []
-    for crsvr in crsvr_strs:
-        ax_scores = fig.add_subplot(score_plot_region[crsvr])
-        ax_runtime = fig.add_subplot(runtime_plot_region[crsvr])
-        for selection in selection_strs:
-            print(f"Running Genetic Algorithm ({crsvr}, {selection}) ...")
-            print(f"eps = {eps_floor}")
-            print(f"delta = {delta_ceil}")
-            print(
-                f"{'Trial':<6} {'Seed':<6} {'Best_Score':<12} {'Time Taken (s)':<14} {'Number of Generations':<100}"
-            )
-            print("-" * 60)
-            for i in range(0, trial_count):
-                scores, wts, times, runtime = Genetic_Algorithm.solveGA(
-                    pop_size=pop_size,
-                    tournament_size=5,
-                    crossover_str=crsvr,
-                    selection_str=selection,
-                    crossover_rate=0.85,
-                    mutation_rate=0.0,
-                    num_generations=num_gens,
-                    elite_pct=0.1,
-                    patience_pct=0.2,
-                    seed=i + 1,
-                )
-                best_wts.append(wts)
-                # scores : record of scores over the generations
-                # wts : the record of wts
-                best_solution = Genetic_Algorithm.optimal_wts
-                best_score = Genetic_Algorithm.sharpe(best_solution)
-                if best_score > global_best_score:
-                    global_best_solution = best_solution
-                    global_best_score = best_score
-                    global_best_trial = i + 1
-                    global_best_time = runtime
 
-                trial_opt_weights = Genetic_Algorithm.optimal_wts
-                final_scores[crsvr][selection][i] = Genetic_Algorithm.sharpe(
-                    trial_opt_weights
-                )
-                runtime_traces[crsvr][selection][i] = np.array(times)
-                fitness_traces[crsvr][selection][i] = scores
-                ax_scores.plot(
-                    range(len(scores)),
-                    scores,
-                    label=f"Trial {i + 1} ({selection})",
-                    linestyle=linestyles[selection],
-                )
-                ax_runtime.plot(
-                    range(len(times)),
-                    times,
-                    label=f"Trial {i + 1} ({selection})",
-                    linestyle=linestyles[selection],
-                )
-                print(
-                    f"{i + 1:<6} {i + 1:<6} {best_score:<12.6f} {runtime:<14.6f} {len(scores):<21} \n{Genetic_Algorithm.optimal_wts} {np.sum(Genetic_Algorithm.optimal_wts)}"
-                )
+    print(f"Running Genetic Algorithm ({crsvr}, {selection}) ...")
+    print(f"eps = {eps_floor}")
+    print(f"delta = {delta_ceil}")
+    print(
+        f"{'Trial':<6} {'Seed':<6} {'Best_Score':<12} {'Time Taken (s)':<14} {'Number of Generations':<100}"
+    )
+    print("-" * 60)
+    for i in range(0, trial_count):
+        Genetic_Algorithm = GA(df, eps=eps_floor, delta=delta_ceil, cardinality=card)
+        scores, wts, times, runtime = Genetic_Algorithm.solveGA(
+            pop_size=pop_size,
+            tournament_size=7,
+            crossover_str=crsvr,
+            crossover_rate=0.9,
+            mutation_rate=0.2,
+            num_generations=num_gens,
+            elite_pct=0.1,
+            patience_pct=0.2,
+            seed=i + 1,
+        )
+        best_wts.append(wts)
+        # scores : record of scores over the generations
+        # wts : the record of best wts
+        best_solution = Genetic_Algorithm.optimal_wts
+        best_score = Genetic_Algorithm.sharpe(best_solution)
+        if best_score > global_best_score:
+            global_best_solution = best_solution
+            global_best_score = best_score
+            global_best_trial = i + 1
+            global_best_time = runtime
 
-            print("\n\n")
-            ax_scores.set_title(f"Fitness Traces across all trials {crsvr}")
-            ax_scores.set_xlabel("Generation")
+        trial_opt_weights = Genetic_Algorithm.optimal_wts
 
-            ax_scores.set_ylabel("Objective")
+        runtime_arr.append(runtime)
+        best_scores_arr.append(best_score)
 
-            ax_runtime.set_title(f"Runtime Traces across all trials {crsvr}")
-            ax_runtime.set_xlabel("Generation")
-            ax_runtime.set_ylabel("Time (s)")
+        print(
+            f"{i + 1:<6} {i + 1:<6} {best_score:<12.6f} {runtime:<14.6f} {len(scores):<21} \n{trial_opt_weights} {np.sum(Genetic_Algorithm.optimal_wts)}"
+        )
 
-            ax_scores.grid(True)
-            ax_scores.legend(loc="lower right")
+    print("\n\n")
 
-            ax_runtime.grid(True)
-            ax_runtime.legend(loc="lower right")
-            daily_returns = Genetic_Algorithm.returns
-            solution = Genetic_Algorithm.optimal_wts
-            print(np.sum(Genetic_Algorithm.optimal_wts != 0))
-            portfolio = dict(zip(daily_returns, solution))
-            holdings = {k: v for k, v in portfolio.items() if v > 0}
-            sorted_holdings = dict(
-                sorted(holdings.items(), key=lambda x: x[1], reverse=True)
-            )
-            portfolio_returns = daily_returns @ solution
+    # ax_runtime.legend(loc = "lower right")
+    daily_returns = Genetic_Algorithm.returns
+    solution = global_best_solution
 
-            portfolio_cum_return = (1 + portfolio_returns).prod() - 1
+    portfolio = dict(zip(daily_returns, solution))
+    holdings = {k: v for k, v in portfolio.items() if v > 0}
+    sorted_holdings = dict(sorted(holdings.items(), key=lambda x: x[1], reverse=True))
+    portfolio_returns = daily_returns @ solution
 
-            print("Summary of GA:")
-            print("\nOptimal Portfolio Composition:")
-            print("------------------------------")
-            for stock, weight in sorted_holdings.items():
-                print(f"{stock}: {weight:.4f} ({weight * 100:.2f}%)")
-            print(f"\nPerformance Comparison:")
-            print(f"Portfolio Sharpe: {Genetic_Algorithm.sharpe(solution):.4f}")
-            print(f"Portfolio Cumulative Return: {portfolio_cum_return:.2%}")
+    portfolio_cum_return = (1 + portfolio_returns).prod() - 1
 
-            with open("GA_holdings.json", "w") as file:
-                json.dump(sorted_holdings, file, indent=4)
+    Genetic_Algorithm.plot_convergence()
+    Genetic_Algorithm.plot_portfolio_composition()
+    Genetic_Algorithm.plot_score_statistics()
+    Genetic_Algorithm.plot_runtime_analysis()
+
+    print("Summary of GA:")
+    print("\nOptimal Portfolio Composition:")
+    print("------------------------------")
+    for stock, weight in sorted_holdings.items():
+        print(f"{stock}: {weight:.4f} ({weight * 100:.2f}%)")
+    print(f"\nPerformance Comparison:")
+    print(f"Portfolio Sharpe: {Genetic_Algorithm.sharpe(solution):.4f}")
+    print(f"Portfolio Cumulative Return: {portfolio_cum_return:.2%}")
+    print(f"Best Trial ({global_best_trial}) Runtime : {global_best_time}")
 
 
 class snp100_Portfolio:
     def __init__(
         self,
-        returns_df: pd.DataFrame,
+        df,
     ):
         # Return Data
-        self.returns = returns_df
+        self.df = df
+
+        if "Date" in self.df.columns:
+            self.returns = self.df.drop(columns=["Date"])
+        else:
+            self.returns = self.df
+        self.cov_matrix = self.returns.cov().values
+        self.assets = self.returns.columns
         self.mean_returns = np.array(
             [np.mean(self.returns[a]) for a in self.returns.columns]
         )
-        self.cov_matrix = self.returns.cov().values
-        self.assets = self.returns.columns
 
 
 class GA(snp100_Portfolio):
     def __init__(
         self,
-        returns_df: pd.DataFrame,
-        eps=np.array([0.1] * 101),
-        delta=np.array([0.9] * 101),
-        cardinality=20,
+        df,
+        eps=np.array([0.01] * 101),  # Epsilon is floor constraint
+        delta=np.array([0.9] * 101),  # delta is ceiling constraint
+        cardinality=10,
     ):
-        super().__init__(returns_df)
+        super().__init__(df)
         # Yearly Risk Free Rate = 0.0524 taken from moodle
         # assume 252 trading days.
         self.yearly_rf_rate = 0.0524
@@ -291,12 +133,20 @@ class GA(snp100_Portfolio):
         self.assets = self.returns.columns
 
         self.initial_population = None
-        self.final_population = None
         self.optimal_wts = None
 
         self.delta = delta
         self.eps = eps
         self.cardinality = cardinality
+
+        # Data for Visualisation
+        self.convergence_history = []
+        self.mean_generational_sharpe_history = []
+        self.median_generational_sharpe_history = []
+        self.min_generational_sharpe_history = []
+        self.max_generational_sharpe_history = []
+        self.std_generational_sharpe_history = []
+        self.runtime_history = []
 
     def enforce_constraints(self, weights: np.ndarray):
         def enforce_cardinality(wts):
@@ -331,7 +181,7 @@ class GA(snp100_Portfolio):
             if np.sum(wts != 0) != self.cardinality or np.any(wts < 0):
                 print(wts)
                 print(np.sum(wts))
-                raise ValueError("s")
+                raise ValueError("Cardinality constraint not handled properly.")
             return wts
 
         def enforce_eps_delta(wts, eps_c, delta_c):
@@ -402,6 +252,7 @@ class GA(snp100_Portfolio):
         return sharpe_ratio
 
     def initialize_population(self, pop_size):
+        # Random initialization of population
         init_pop = np.random.dirichlet(
             alpha=np.ones(len(self.assets)),
             size=pop_size,
@@ -444,6 +295,7 @@ class GA(snp100_Portfolio):
     def generateParents_Tournament(self, pop, tournament_size=3):
         def Tournament(candidates, k):
             # A single round of tournament
+            # Search for best candidate by sharpe
             best_candidate = candidates[0].copy()
 
             for i in range(1, k):
@@ -455,7 +307,7 @@ class GA(snp100_Portfolio):
 
         def TournamentSelection(n, k):
             # n is the number of tournament rounds
-            # k is the Tournament Size
+            # k is the Tournament Size (selection pressure, Miller et. al., 1995)
             # we will then get n distinct parents or less, due to duplicates when randomly selecting k candidates
             # In Genetic Algorithm, Tournament Selection is called with n = 2 to generate two parents.
 
@@ -478,6 +330,7 @@ class GA(snp100_Portfolio):
         return parent1, parent2
 
     def generateParents_Roulette(self, pop, norm_fitness):
+        # Roulette Selection without replacement.
         parent_indices = np.random.choice(
             a=len(pop), size=2, p=norm_fitness, replace=False
         )
@@ -496,6 +349,13 @@ class GA(snp100_Portfolio):
         return offspring1, offspring2
 
     def get_mutated(self, wt1, wt2, mutation_rate, mu=0.5):
+        # GM-mu mutation by Emanuele Stomeo et al., 2020
+        # wt1 : decrease min by a factor of mu
+        #       increase max such that the wt1 still sums to 1
+        #       i.e., the smallest gene is decreased by a factor mu, the largest gene increased
+        # wt2 : increase min by a factor of mu
+        #       decrease max such that the wt1 still sums to 1
+        #       i.e., the smalest gene is increased by a factor of mu, the smallest gene decreased
         if np.random.rand() < mutation_rate:
             wt1_nonzero_idx = np.where(wt1 != 0)
             wt2_nonzero_idx = np.where(wt2 != 0)
@@ -512,7 +372,9 @@ class GA(snp100_Portfolio):
             wt2[min_wt2_idx] /= mu
             wt2[max_wt2_idx] -= (1 - mu) * wt2[min_wt2_idx]
             if wt2[max_wt2_idx] < 0:
-                wt2[max_wt2_idx] = self.eps[max_wt2_idx]
+                wt2[max_wt2_idx] = self.eps[
+                    max_wt2_idx
+                ]  # move to eps when decreased too much. Invoke repair algorithm after mutation
         return wt1, wt2
 
     def get_elite_indices(self, fitness, elitism):
@@ -526,7 +388,6 @@ class GA(snp100_Portfolio):
         pop_size=1000,
         tournament_size=3,
         crossover_str="one_point_crossover",
-        selection_str="Roulette",
         crossover_rate=0.8,
         mutation_rate=0.03,
         mu=0.5,
@@ -535,14 +396,47 @@ class GA(snp100_Portfolio):
         patience_pct=0.1,
         seed=22000265,
     ):
-        # https://www.atlantis-press.com/proceedings/jcis-06/273 used:
-        # pop_size = 100,
-        # crossover_rate = 1.0,
-        # mutation_rate = 0.03
-        # num_generations = 3000
+        """
+
+        Args:
+            pop_size (int, optional): (positive int)
+                population size of GA. Defaults to 1000.
+
+            tournament_size (int, optional): (positive int)
+                No. of individuals per tournament during tournament selection. Defaults to 3.
+
+            crossover_str (str, optional): {"one_point_crossover", "uniform_crossover", "arithmetic_crossover"}
+                Crossover method. Defaults to "one_point_crossover".
+
+            crossover_rate (float, optional): [0, 1]
+                probability of crossover for each pair of parents (no crossover means offsprings are direct copies). Defaults to 0.8.
+
+            mutation_rate (float, optional): [0, 1]
+                probability of mutation for each pair of children. Defaults to 0.03.
+
+            mu (float, optional): [0, 1]
+                mu in [0, 1]. Reflects the intensity of the GM-mu mutation. Defaults to 0.5.
+
+            num_generations (int, optional):
+                number of generations. Defaults to 3000.
+
+            elite_pct (float, optional):
+                Percentage of offsprings to be considered elites. Defaults to 0.1.
+
+            patience_pct (float, optional):
+                Number of generations of no improvement before stopping. Set to 1 for no early stop. Defaults to 0.1.
+
+            seed (int, optional):
+                seed for reproducibility. Defaults to 22000265.
+
+        Returns:
+            convergence_history : Record of best sharpe ratio over each generation
+            wts : record of weights corresponding to best sharpe ratio over each generation
+            times : time taken for the ith generation
+
+        """
         np.random.seed(seed=seed)
 
-        scores = []
         wts = []
         elitism = int(np.round(pop_size * elite_pct))
         elite_list = np.zeros(elitism)
@@ -553,12 +447,19 @@ class GA(snp100_Portfolio):
         best_wts = pop[0]
 
         times = []  # Runtime history
-        start_time = time.time()
 
+        start_time = time.time()
+        total_runtime = 0.0
         no_improvement = 0
+
         for generation in range(num_generations):
             # Compute fitnesses
             fitness = np.array([self.sharpe(pop[i]) for i in range(pop_size)])
+            self.mean_generational_sharpe_history.append(np.mean(fitness))
+            self.median_generational_sharpe_history.append(np.median(fitness))
+            self.min_generational_sharpe_history.append(np.min(fitness))
+            self.max_generational_sharpe_history.append(np.max(fitness))
+            self.std_generational_sharpe_history.append(np.std(fitness))
             norm_fitness = np.exp(fitness) / np.sum(np.exp(fitness))  # Softmax
             max_fitness = fitness.max()
             elite_indices = self.get_elite_indices(
@@ -571,13 +472,13 @@ class GA(snp100_Portfolio):
             if max_fitness > best_score:
                 best_score = max_fitness
                 best_wts = pop[np.argmax(fitness)]
-
+            self.convergence_history.append(best_score)
             new_pop = np.zeros(pop_size, dtype="object")
             new_pop_count = 0
             while new_pop_count < pop_size - elitism:
-                if selection_str == "Tournament":
+                if tournament_size != 0:
                     p1, p2 = self.generateParents_Tournament(pop, tournament_size)
-                if selection_str == "Roulette":
+                else:
                     p1, p2 = self.generateParents_Roulette(
                         pop=pop, norm_fitness=norm_fitness
                     )
@@ -608,35 +509,232 @@ class GA(snp100_Portfolio):
 
             pop = new_pop
 
-            scores.append(best_score)
             wts.append(best_wts)
-            if generation >= 1 and np.isclose(scores[-2], scores[-1], atol=1e-12):
+            if generation >= 1 and np.isclose(
+                self.convergence_history[-2], self.convergence_history[-1], atol=1e-12
+            ):
                 no_improvement += 1
+
+            gen_time = time.time() - start_time - total_runtime
+            total_runtime = time.time() - start_time
+
+            times.append(gen_time)
+            self.runtime_history.append(total_runtime)
 
             if no_improvement > patience:
                 break
 
-            times.append(time.time() - start_time)
         runtime = time.time() - start_time
         self.optimal_wts = best_wts
-        self.final_population = pop.copy()
-        return scores, wts, times, runtime
+
+        self.runtime_data = {
+            "total": runtime,
+            "per_iteration": times,
+            "cumulative": self.runtime_history,
+        }
+
+        return self.convergence_history, wts, times, runtime
+
+    # Visualisation functions
+    def plot_convergence(self):
+        """Plot the convergence history of the optimization process and return the figure"""
+        fig, ax1 = plt.subplots(figsize=(12, 6))
+
+        iterations = range(len(self.mean_generational_sharpe_history))
+        avg_scores = np.array(self.mean_generational_sharpe_history)
+        std_scores = np.array(self.std_generational_sharpe_history)
+
+        ax1.plot(
+            iterations,
+            avg_scores,
+            label="Mean Generational Sharpe",
+            color="green",
+            linestyle="--",
+        )
+        ax1.fill_between(
+            iterations,
+            avg_scores - std_scores,
+            avg_scores + std_scores,
+            color="green",
+            alpha=0.2,
+            label="±1 Std Dev",
+        )
+
+        ax1.plot(
+            iterations,
+            self.convergence_history,
+            color="purple",
+            alpha=0.5,
+            linestyle="-",
+            label="Global Best Sharpe",
+        )
+        ax1.set_xlabel("Iteration")
+        ax1.set_ylabel("Sharpe Ratio")
+        ax1.set_title("GA Convergence History")
+        ax1.grid(True, alpha=0.3)
+        ax1.legend(loc="best")
+
+        fig.tight_layout()
+
+        plt.show()
+
+        return fig
+
+    def plot_runtime_analysis(self):
+        """Plot runtime analysis of the optimization process and return the figure"""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+        ax1.plot(self.runtime_data["cumulative"], color="blue", linewidth=2)
+        ax1.set_xlabel("Iteration")
+        ax1.set_ylabel("Cumulative Runtime (seconds)")
+        ax1.set_title("Cumulative Runtime vs Iterations")
+        ax1.grid(True, alpha=0.3)
+
+        ax2.plot(self.runtime_data["per_iteration"], color="green", linewidth=2)
+        ax2.set_xlabel("Iteration")
+        ax2.set_ylabel("Time per Iteration (seconds)")
+        ax2.set_title("Time per Iteration")
+        ax2.grid(True, alpha=0.3)
+
+        # Add moving average
+        window_size = min(10, len(self.runtime_data["per_iteration"]))
+        if window_size > 1:
+            moving_avg = np.convolve(
+                self.runtime_data["per_iteration"],
+                np.ones(window_size) / window_size,
+                mode="valid",
+            )
+            ax2.plot(
+                range(window_size - 1, len(self.runtime_data["per_iteration"])),
+                moving_avg,
+                color="red",
+                linewidth=1.5,
+                linestyle="--",
+                label=f"{window_size}-iter Moving Avg",
+            )
+            ax2.legend()
+
+        fig.tight_layout()
+
+        plt.show()
+
+        return fig
+
+    def plot_score_statistics(self):
+        """Plot statistical analysis of scores across iterations and return the figure"""
+        iterations = range(len(self.mean_generational_sharpe_history))
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+        ax.plot(
+            iterations,
+            self.mean_generational_sharpe_history,
+            label="Mean Score",
+            color="green",
+            linewidth=2,
+        )
+        ax.plot(
+            iterations,
+            self.median_generational_sharpe_history,
+            label="Median Score",
+            color="blue",
+            linestyle="--",
+        )
+        ax.plot(
+            iterations,
+            self.max_generational_sharpe_history,
+            label="Max Score",
+            color="purple",
+        )
+        ax.plot(
+            iterations,
+            self.min_generational_sharpe_history,
+            label="Min Score",
+            color="red",
+        )
+
+        ax.fill_between(
+            iterations,
+            self.min_generational_sharpe_history,
+            self.max_generational_sharpe_history,
+            color="lightblue",
+            alpha=0.3,
+            label="Score Range",
+        )
+
+        interval = max(1, len(iterations) // 20)
+        selected_iterations = list(iterations)[::interval]
+        selected_means = [
+            self.mean_generational_sharpe_history[i] for i in selected_iterations
+        ]
+        selected_stds = [
+            self.std_generational_sharpe_history[i] for i in selected_iterations
+        ]
+
+        ax.errorbar(
+            selected_iterations,
+            selected_means,
+            yerr=selected_stds,
+            fmt="o",
+            color="darkgreen",
+            capsize=5,
+            label="Std Dev",
+        )
+
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Sharpe Ratio")
+        ax.set_title("Score Statistics Across Iterations")
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="best")
+
+        fig.tight_layout()
+
+        plt.show()
+
+        return fig
+
+    def plot_portfolio_composition(self):
+        """Plot the composition of the optimal portfolio and return the figure"""
+        weights = self.optimal_wts
+        assets = self.returns.columns
+
+        non_zero_indices = np.where(weights > 0)[0]
+        non_zero_weights = weights[non_zero_indices]
+        non_zero_assets = [assets[i] for i in non_zero_indices]
+
+        sorted_indices = np.argsort(non_zero_weights)[::-1]
+        sorted_weights = non_zero_weights[sorted_indices]
+        sorted_assets = [non_zero_assets[i] for i in sorted_indices]
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        bars = ax.bar(range(len(sorted_assets)), sorted_weights, color="skyblue")
+        ax.set_xticks(range(len(sorted_assets)))
+        ax.set_xticklabels(sorted_assets, rotation=45, ha="right")
+        ax.set_title(
+            f"Optimal Portfolio Composition (Sharpe: {self.sharpe(self.optimal_wts):.4f})"
+        )
+        ax.set_xlabel("Assets")
+        ax.set_ylabel("Weight")
+        ax.grid(True, alpha=0.3, axis="y")
+
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                height + 0.01,
+                f"{sorted_weights[i]:.3f}",
+                ha="center",
+                va="bottom",
+            )
+
+        fig.tight_layout()
+
+        plt.show()
+
+        return fig
 
 
+# %%
 if __name__ == "__main__":
     main()
-
-# # %%
-# import scipy
-# from scipy.stats import normaltest
-# import pandas as pd
-
-# return_df = pd.read_csv("data/return_df.csv")
-# return_df = return_df.drop(columns=["Date"])
-
-# for asset in return_df.columns:
-#     norm_test = normaltest(return_df[asset])
-#     print(norm_test.pvalue)
-
-
-# # %%
+# %%
