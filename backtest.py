@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-from backtest_adapters import GABacktest, PSOBacktest
-from tcn.tcn_backtest import TCNBacktest
+from backtest_adapters import GABacktest, PSOBacktest, TCNBacktest
 from lstm_pyopt import LSTMPyOptBacktest
 import time
 from datetime import datetime
