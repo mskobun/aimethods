@@ -1,3 +1,4 @@
+import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,8 +8,6 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 from pypfopt import (
-    expected_returns,
-    risk_models,
     EfficientFrontier,
     objective_functions,
 )
@@ -343,6 +342,7 @@ class LSTMPyOptBacktest:
                 gamma = 1.0 / self.params["k_assets"]
                 ef.add_objective(objective_functions.L2_reg, gamma=gamma)
 
+            warnings.filterwarnings("ignore", module="pypfopt")
             # Optimize for maximum Sharpe ratio
             ef.max_sharpe(risk_free_rate=self.params["risk_free_rate"])
 
@@ -379,7 +379,6 @@ class LSTMPyOptBacktest:
             return weight_array
 
         except Exception as e:
-            print(f"Portfolio optimization failed: {str(e)}")
             # Fallback to equal weights if optimization fails
             n_assets = returns.shape[1]
             return np.ones(n_assets) / n_assets
