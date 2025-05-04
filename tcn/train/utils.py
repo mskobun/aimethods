@@ -3,14 +3,14 @@ import torch
 import torch.nn as nn
 
 
-def save_model(model, saved_dir, name):
-    os.makedirs(saved_dir, exist_ok=True)
+def save_model(model, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     check_point = {}
     if isinstance(model, nn.DataParallel):
         check_point["model_state_dict"] = model.module.state_dict()
     else:
         check_point["model_state_dict"] = model.state_dict()
-    torch.save(check_point, saved_dir + "/best_model_weight_{}.pt".format(name))
+    torch.save(check_point, path)
 
 
 def remove_prefix(state_dict, prefix):

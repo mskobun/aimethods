@@ -1,5 +1,6 @@
 {
   "MODEL": "TCN",
+  "MODEL_PATH": "results/tcn_best_model_weight_hb.pt",
   "BATCH": 32,
   "SEED": 42,
   "EPOCHS": 100,

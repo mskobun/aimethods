@@ -68,15 +68,6 @@ class Trainer:
         with open("data/date.pkl", "rb") as f:
             test_date = pickle.load(f)
 
-        # Debug prints
-        print("Main path values:")
-        print("train_x_raw shape:", train_x_raw.shape)
-        print("train_y_raw shape:", train_y_raw.shape)
-        print("train_x_raw min/max:", train_x_raw.min(), train_x_raw.max())
-        print("train_y_raw min/max:", train_y_raw.min(), train_y_raw.max())
-        print("train_x_raw mean/std:", train_x_raw.mean(), train_x_raw.std())
-        print("train_y_raw mean/std:", train_y_raw.mean(), train_y_raw.std())
-
         self.train_x_raw = train_x_raw
         self.train_y_raw = train_y_raw
         self.test_x_raw = test_x_raw
@@ -84,8 +75,6 @@ class Trainer:
         self.test_date = test_date
 
     def _scale_data(self, scale=10):
-        print("shape: ", self.train_x_raw.shape)
-        print("shape: ", self.train_y_raw.shape)
         self.train_x = torch.from_numpy(self.train_x_raw.astype("float32") * scale)
         self.train_y = torch.from_numpy(self.train_y_raw.astype("float32") * scale)
         self.test_x = torch.from_numpy(self.test_x_raw.astype("float32") * scale)
@@ -196,7 +185,12 @@ class Trainer:
                     print(f"valid loss: {min(valid_loss)}")
                     if running_loss <= min(valid_loss):
                         early_stop_count = 0
-                        save_model(self.model, "result", "hb")
+                        save_model(
+                            self.model,
+                            self.config.get(
+                                "MODEL_PATH", "result/best_model_weight_hb.pt"
+                            ),
+                        )
                         print(f"Improved! Epoch {epoch + 1}, loss: {running_loss}")
 
                     else:
@@ -219,7 +213,7 @@ class Trainer:
     def backtest(self, visualize=True):
         self.model = load_model(
             self.model,
-            "result/best_model_weight_hb.pt",
+            self.config.get("MODEL_PATH", "result/best_model_weight_hb.pt"),
             use_cuda=self.config["USE_CUDA"],
         )
 
