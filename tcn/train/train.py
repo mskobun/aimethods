@@ -6,7 +6,7 @@ import pandas as pd
 from model.tcn import TCN
 from model.transformer import Transformer
 from model.sam import SAM
-from model.loss import max_sharpe, equal_risk_parity
+from model.loss import max_sharpe
 from train.utils import save_model, load_model
 
 

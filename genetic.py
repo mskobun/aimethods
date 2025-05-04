@@ -90,7 +90,7 @@ def main():
     print("------------------------------")
     for stock, weight in sorted_holdings.items():
         print(f"{stock}: {weight:.4f} ({weight * 100:.2f}%)")
-    print(f"\nPerformance Comparison:")
+    print("\nPerformance Comparison:")
     print(f"Portfolio Sharpe: {Genetic_Algorithm.sharpe(solution):.4f}")
     print(f"Portfolio Cumulative Return: {portfolio_cum_return:.2%}")
     print(f"Best Trial ({global_best_trial}) Runtime : {global_best_time}")
@@ -403,6 +403,7 @@ class GA(snp100_Portfolio):
 
             tournament_size (int, optional): (positive int)
                 No. of individuals per tournament during tournament selection. Defaults to 3.
+                set tournament_size = 0 for roulette wheel selection
 
             crossover_str (str, optional): {"one_point_crossover", "uniform_crossover", "arithmetic_crossover"}
                 Crossover method. Defaults to "one_point_crossover".
@@ -416,14 +417,15 @@ class GA(snp100_Portfolio):
             mu (float, optional): [0, 1]
                 mu in [0, 1]. Reflects the intensity of the GM-mu mutation. Defaults to 0.5.
 
-            num_generations (int, optional):
+            num_generations (int, optional): (positive int)
                 number of generations. Defaults to 3000.
 
-            elite_pct (float, optional):
+            elite_pct (float, optional): [0, 1]
                 Percentage of offsprings to be considered elites. Defaults to 0.1.
 
-            patience_pct (float, optional):
+            patience_pct (float, optional): [0, 1]
                 Number of generations of no improvement before stopping. Set to 1 for no early stop. Defaults to 0.1.
+                Tolerance for no improvement is set to 1e-12.
 
             seed (int, optional):
                 seed for reproducibility. Defaults to 22000265.
@@ -432,7 +434,7 @@ class GA(snp100_Portfolio):
             convergence_history : Record of best sharpe ratio over each generation
             wts : record of weights corresponding to best sharpe ratio over each generation
             times : time taken for the ith generation
-
+            runtime : Time taken for solveGA to optimise portfolio
         """
         np.random.seed(seed=seed)
 

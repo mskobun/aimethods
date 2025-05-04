@@ -14,7 +14,9 @@ def save_model(model, path):
 
 
 def remove_prefix(state_dict, prefix):
-    f = lambda x: x.split(prefix, 1)[-1] if x.startswith(prefix) else x
+    def f(x):
+        return x.split(prefix, 1)[-1] if x.startswith(prefix) else x
+
     return {f(key): value for key, value in state_dict.items()}
 
 

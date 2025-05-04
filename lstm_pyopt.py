@@ -1,7 +1,6 @@
 import warnings
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
@@ -357,7 +356,7 @@ class LSTMPyOptBacktest:
 
             return weight_array
 
-        except Exception as e:
+        except Exception:
             # Fallback to equal weights if optimization fails
             n_assets = returns.shape[1]
             return np.ones(n_assets) / n_assets
