@@ -7,6 +7,7 @@ from datetime import datetime
 import pickle
 import os
 import matplotlib.pyplot as plt
+import sys
 
 
 class ReturnDataset:
@@ -238,9 +239,17 @@ def run_backtest(selected_algorithms=None):
     if "EWP" in selected_algorithms:
         algorithms["EWP"] = EWPBacktest()
 
-    print("Starting a backtest with the following algorithms:")
-    for algorithm in algorithms:
-        print(f"  - {algorithm}")
+    if "GA" in selected_algorithms or "PSO" in selected_algorithms:
+        print(
+            "Backtesting may take hours due to the metaheuristic's nature. Do you want to continue? (y/n)"
+        )
+        if input() != "y":
+            print("Exiting...")
+            sys.exit()
+
+        print("Starting a backtest with the following algorithms:")
+        for algorithm in algorithms:
+            print(f"  - {algorithm}")
 
     # Create results directory if it doesn't exist
     os.makedirs("results", exist_ok=True)
