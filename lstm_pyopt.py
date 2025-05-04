@@ -25,8 +25,6 @@ if torch.cuda.is_available():
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-print(f"\nUsing device: {DEVICE}")
-
 
 class ReturnDataset(Dataset):
     def __init__(self, return_df, seq_len=60):

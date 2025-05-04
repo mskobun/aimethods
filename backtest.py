@@ -7,7 +7,6 @@ from datetime import datetime
 import pickle
 import os
 import matplotlib.pyplot as plt
-import torch
 
 
 class ReturnDataset:
@@ -124,6 +123,7 @@ class BacktestResults:
         return ax
 
     def plot_weights(self, tickers=None, show=True, save_path=None):
+        fig, ax = plt.subplots(figsize=(12, 6))
         weights = self.weights_history
 
         # Convert dates to datetime if they're strings
@@ -139,18 +139,18 @@ class BacktestResults:
         # Plot in order of mean weight
         for i in sorted_indices:
             if max(weights[:, i]) > 0.01:
-                plt.plot(dates, weights[:, i], label=f"{tickers[i]}")
+                ax.plot(dates, weights[:, i], label=f"{tickers[i]}")
 
-        plt.title(f"{self.algorithm_name} - Asset Weights")
+        ax.set_title(f"{self.algorithm_name} - Asset Weights")
         # Rotate x-axis labels for better readability
         plt.xticks(rotation=45)
-        plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
         if save_path:
             plt.savefig(save_path, bbox_inches="tight")
         if show:
             plt.show()
-        return plt.gcf(), plt.gca()
+        return fig, ax
 
     def __str__(self):
         return (
@@ -326,15 +326,18 @@ def plot_results(save_path=None):
         plt.savefig(save_path, bbox_inches="tight")
     plt.show()
 
+    # Get tickers from the data
+    data = pd.read_csv("data/return_df.csv")
+    tickers = data.columns[1:].tolist()  # Skip the Date column
+
     # Plot weights for each result
     for result in results:
-        # Get tickers from the data
-        data = pd.read_csv("data/return_df.csv")
-        tickers = data.columns[1:].tolist()  # Skip the Date column
-
-        result.plot_weights(
-            tickers, save_path=f"results/{result.algorithm_name}_weights.png"
-        )
+        if result.algorithm_name != "EWP":
+            result.plot_weights(
+                tickers, save_path=f"results/{result.algorithm_name}_weights.png"
+            )
+        else:
+            print(f"Skipping plotting weights for {result.algorithm_name}")
 
 
 def main():
@@ -343,7 +346,7 @@ def main():
 
     # Ask user if they want to see previous results or run a new backtest
     choice = input(
-        "Do you want to (1) view previous results or (2) run a new backtest? (1/2): "
+        "do you want to (1) view previous results or (2) run a new backtest? (1/2): "
     )
 
     if choice == "1":
