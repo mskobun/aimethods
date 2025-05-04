@@ -16,8 +16,10 @@ This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management. 
 ```sh
 # Install dependencies
 uv sync
-# Activate the virtual environment
+# Activate the virtual environment (Linux/MacOS)
 source .venv/bin/activate
+# Activate the virtual environment (Windows)
+.venv\Scripts\activate
 ```
 
 A `requirements.txt` file is also provided.
