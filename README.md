@@ -12,7 +12,7 @@ In addition, a data downloader (`dataloader.py`) and a backtesting framework (`b
 
 ## Installation
 
-This project uses [`uv`](https://docs.astral.sh/uv/) for dependency managment. If you have `uv` installed:
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management. If you have `uv` installed:
 ```sh
 # Install dependencies
 uv sync
