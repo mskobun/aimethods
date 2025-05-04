@@ -65,7 +65,6 @@ class LSTMReturnPredictor(nn.Module):
         hidden_dim,
         num_layers,
         output_dim,
-        dropout=0.1,
     ):
         super(LSTMReturnPredictor, self).__init__()
         self.lstm = nn.LSTM(
@@ -73,7 +72,6 @@ class LSTMReturnPredictor(nn.Module):
             hidden_size=hidden_dim,
             num_layers=num_layers,
             batch_first=True,
-            dropout=dropout,
         )
         self.norm = nn.LayerNorm(hidden_dim)
         self.heads = nn.ModuleList([nn.Linear(hidden_dim, 1) for _ in range(input_dim)])
@@ -172,13 +170,11 @@ class LSTMPyOptBacktest:
         seq_len: int,
         future_days: int,
         params: dict = None,
-        training_plot_filename: str = None,
     ):
         # Create dataloaders with fixed worker seeds
         def worker_init_fn(worker_id):
             np.random.seed(SEED + worker_id)
 
-        self.training_plot_filename = training_plot_filename
         self.dim = train_df.shape[1]
         self.tickers = train_df.columns.tolist()
         self.train_df = train_df
@@ -191,7 +187,6 @@ class LSTMPyOptBacktest:
             "lr": 0.001,
             "hidden_dim": 64,
             "num_layers": 1,
-            "dropout": 0.2,
             "weight_decay": 1e-5,
             "max_weight": 0.1,  # 10% maximum weight constraint
             "min_weight": 0.01,
@@ -235,7 +230,6 @@ class LSTMPyOptBacktest:
             hidden_dim=self.params["hidden_dim"],
             num_layers=self.params["num_layers"],
             output_dim=self.dim,
-            dropout=self.params["dropout"],
         )
 
         train_model(
@@ -245,7 +239,6 @@ class LSTMPyOptBacktest:
             epochs=500,
             lr=self.params["lr"],
             weight_decay=self.params["weight_decay"],
-            plot_filename=self.training_plot_filename,
         )
 
     def predict_price(self, returns: np.ndarray):

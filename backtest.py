@@ -227,14 +227,12 @@ def run_backtest(selected_algorithms=None):
                 "lr": 0.001,
                 "hidden_dim": 64,
                 "num_layers": 1,
-                "dropout": 0.2,
                 "weight_decay": 1e-5,
                 "max_weight": 0.9,
                 "min_weight": 0.01,
                 "k_assets": 10,
                 "risk_free_rate": RISK_FREE_RATE,
             },
-            training_plot_filename="lstm_pyopt_training.png",
         )
     if "EWP" in selected_algorithms:
         algorithms["EWP"] = EWPBacktest()
