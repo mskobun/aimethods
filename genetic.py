@@ -14,8 +14,8 @@ def main():
     card = 10
     Genetic_Algorithm = GA(df, eps=eps_floor, delta=delta_ceil, cardinality=card)
 
-    # Sample parameters
-    pop_size = 500
+    # Tuned parameters
+    pop_size = 3000
     num_gens = 500
     trial_count = 5
 
@@ -41,7 +41,7 @@ def main():
             tournament_size=7,
             crossover_str=crsvr,
             crossover_rate=0.9,
-            mutation_rate=0.2,
+            mutation_rate=0.1,
             num_generations=num_gens,
             elite_pct=0.1,
             patience_pct=0.2,
@@ -384,15 +384,15 @@ class GA(snp100_Portfolio):
 
     def solveGA(
         self,
-        pop_size=1000,
-        tournament_size=3,
-        crossover_str="one_point_crossover",
-        crossover_rate=0.8,
-        mutation_rate=0.03,
-        mu=0.5,
-        num_generations=3000,
+        pop_size=3000,
+        tournament_size=7,
+        crossover_str="uniform_crossover",
+        crossover_rate=0.9,
+        mutation_rate=0.1,
+        mu=0.4632970696461231,
+        num_generations=500,
         elite_pct=0.1,
-        patience_pct=0.1,
+        patience_pct=0.2,
         seed=22000265,
     ):
         """
