@@ -20,7 +20,6 @@ def main():
     trial_count = 5
 
     crsvr = "uniform_crossover"
-    selection = "Tournament"
 
     runtime_arr = []
     best_scores_arr = []
@@ -28,7 +27,7 @@ def main():
     global_best_score = 0
     best_wts = []
 
-    print(f"Running Genetic Algorithm ({crsvr}, {selection}) ...")
+    print(f"Running Genetic Algorithm ({crsvr}) ...")
     print(f"eps = {eps_floor}")
     print(f"delta = {delta_ceil}")
     print(
