@@ -23,6 +23,8 @@ def main():
     returns = pd.read_csv("data/return_df.csv", index_col=0)  # column 0 is date
     risk_free_rate = 0.0524 / 365
 
+    # Set seed for reproducibility
+    np.random.seed(42)
     pso = PSO(returns, risk_free_rate=risk_free_rate)
     solution, score, runtime_data = pso.run(500)
 
@@ -295,10 +297,7 @@ class PSO:
         temp_pso = PSO(self.returns, self.particles_count // 3, quiet=self.quiet)
         return temp_pso.run(iterations)
 
-    def run(self, iterations: int, seed: int = 42):
-        if seed is not None:
-            np.random.seed(seed)
-
+    def run(self, iterations: int):
         # Initialise particles
         self.particles = [
             Particle(self.investable_size, self.weight_min, self.weight_max)
@@ -393,7 +392,7 @@ class PSO:
                     evaluate=lambda weights: self.evaluate(weights),
                     quiet=self.quiet,
                 )
-                swarm3_solution, swarm3_score, _ = tabu.run(seed)
+                swarm3_solution, swarm3_score, _ = tabu.run()
 
                 # Select best solution from the three swarms
                 solutions = [
@@ -760,10 +759,7 @@ class Tabu:
         neighbour /= np.sum(neighbour)
         return neighbour
 
-    def run(self, seed: int):
-        if seed is not None:
-            np.random.seed(seed)
-
+    def run(self):
         patience = 0
         patience_limit = 10
         start_time = time.time()
