@@ -6,7 +6,6 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
 import random
-import matplotlib.pyplot as plt
 from pypfopt import (
     EfficientFrontier,
     objective_functions,
@@ -96,7 +95,6 @@ def train_model(
     epochs=500,
     lr=1e-3,
     weight_decay=1e-5,
-    plot_filename=None,
 ):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     criterion = nn.MSELoss()
@@ -165,23 +163,6 @@ def train_model(
         print(
             f"\nRestored best model weights with validation loss: {best_val_loss:.6f}"
         )
-
-    # Plot training and validation loss if requested
-    if plot_filename:
-        plt.figure(figsize=(10, 6))
-        plt.plot(
-            range(1, len(train_losses) + 1), train_losses, "b-", label="Training Loss"
-        )
-        plt.plot(
-            range(1, len(val_losses) + 1), val_losses, "r-", label="Validation Loss"
-        )
-        plt.xlabel("Epoch")
-        plt.ylabel("MSE Loss")
-        plt.title("Training and Validation Loss")
-        plt.grid(True)
-        plt.legend()
-        plt.savefig(plot_filename)
-        plt.close()
 
     return model
 
