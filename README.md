@@ -1,6 +1,6 @@
 # AI Methods Coursework
 
-This [repository](https://github.com/mskobun/aimethods) contains 4 portfolio optimization algorithms our group has implemeneted for COMP2024 module at the Univesity of Nottingham Malaysia.
+This [repository](https://github.com/mskobun/aimethods) contains 4 portfolio optimization algorithms our group has implemented for COMP2024 module at the University of Nottingham Malaysia.
 
 The algorithms are:
 - Particle swarm optimization (`pso.py`)
@@ -12,9 +12,9 @@ In addition, a data downloader (`dataloader.py`) and a backtesting framework (`b
 
 ## Installation
 
-This project uses `uv` for dependency managment. If you have `uv` installed:
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency managment. If you have `uv` installed:
 ```sh
-# Install dependenies
+# Install dependencies
 uv sync
 # Activate the virtual environment
 source .venv/bin/activate
