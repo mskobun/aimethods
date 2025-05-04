@@ -10,19 +10,8 @@ from pypfopt import (
     objective_functions,
 )
 
-# Set seeds for reproducibility
-SEED = 42
-random.seed(SEED)
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-
 # Determine device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-if torch.cuda.is_available():
-    torch.cuda.manual_seed(SEED)
-    torch.cuda.manual_seed_all(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
 
 
 class ReturnDataset(Dataset):
@@ -359,4 +348,5 @@ if __name__ == "__main__":
     import backtest
 
     print("Running LSTM_PyOpt backtest")
+    backtest.set_seed(42)
     backtest.run_backtest(selected_algorithms=["LSTM_PyOpt"])

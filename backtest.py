@@ -1,5 +1,7 @@
+import random
 import pandas as pd
 import numpy as np
+import torch
 from backtest_adapters import GABacktest, PSOBacktest, TCNBacktest
 from lstm_pyopt import LSTMPyOptBacktest
 import time
@@ -180,9 +182,21 @@ class EWPBacktest:
 RISK_FREE_RATE = 0.0524
 
 
+def set_seed(seed):
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def run_backtest(selected_algorithms=None):
     print(f"\nStarting backtest at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     start_time = time.time()
+    print("Setting seed to 42")
+    set_seed(42)
 
     data = pd.read_csv("data/backtesting.csv", index_col="Date")
     data.index = pd.to_datetime(data.index)  # Convert index to datetime
