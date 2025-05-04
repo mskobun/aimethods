@@ -10,6 +10,12 @@ The algorithms are:
 
 In addition, a data downloader (`dataloader.py`) and a backtesting framework (`backtest.py`) is included.
 
+## Datasets
+
+There are two datasets included in `data`:
+1. `return_df.csv` - Daily S&P 100 simple returns from 05.01.2010 to 30.12.2024.
+2. `backtesting.csv` - Daily S&P 100 simple return from 05.01.2010 to 30.12.2020.
+
 ## Installation
 
 This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management. If you have `uv` installed:

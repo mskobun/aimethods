@@ -184,7 +184,7 @@ def run_backtest(selected_algorithms=None):
     print(f"\nStarting backtest at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     start_time = time.time()
 
-    data = pd.read_csv("data/return_df.csv", index_col="Date")
+    data = pd.read_csv("data/backtesting.csv", index_col="Date")
     data.index = pd.to_datetime(data.index)  # Convert index to datetime
 
     # Data for training (LSTM/TCN)
