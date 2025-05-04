@@ -107,9 +107,9 @@ class BacktestResults:
             dates = self.dates
 
         ax.plot(dates, self.cumulative_returns, label=self.algorithm_name)
-        ax.set_title("Cumulative Returns Over Time")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Cumulative Return")
+        ax.set_title("Cumulative Returns Over Time", fontsize=22)
+        ax.set_xlabel("Date", fontsize=20)
+        ax.set_ylabel("Cumulative Return", fontsize=20)
         ax.grid(True)
         ax.legend()
 
@@ -341,9 +341,16 @@ def plot_results(save_path=None):
 
     # Plot cumulative returns
     fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(
+        results[0].dates,
+        np.ones(len(results[0].dates)) * 1.0,
+        linestyle="dashed",
+        color="red",
+    )
     for result in results:
         print(result)
         result.plot_cumulative_returns(ax=ax, show=False)
+
     if save_path:
         plt.savefig(save_path, bbox_inches="tight")
     plt.show()
